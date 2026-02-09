@@ -1,4 +1,6 @@
 #pragma once
+// Auto-generated: sokol function prefixes for linux
+
 #define sapp_isvalid linux_sapp_isvalid
 #define sapp_width linux_sapp_width
 #define sapp_widthf linux_sapp_widthf

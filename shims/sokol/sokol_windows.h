@@ -1,4 +1,6 @@
 #pragma once
+// Auto-generated: sokol function prefixes for windows
+
 #define sapp_isvalid windows_sapp_isvalid
 #define sapp_width windows_sapp_width
 #define sapp_widthf windows_sapp_widthf

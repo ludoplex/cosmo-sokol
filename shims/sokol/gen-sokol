@@ -202,22 +202,39 @@ SOKOL_FUNCTIONS = [
     "sg_gl_attachments_info sg_gl_query_attachments_info(sg_attachments atts)",
 ]
 
-PLATFORMS = ["Linux", "Windows"]
+# Platform configurations:
+# - name: Platform name used in code (linux, windows, macos)
+# - check: Cosmopolitan runtime check function
+# - enabled: Whether this platform is fully implemented
+PLATFORMS = [
+    {"name": "linux", "check": "IsLinux", "enabled": True},
+    {"name": "windows", "check": "IsWindows", "enabled": True},
+    {"name": "macos", "check": "IsXnu", "enabled": True},
+]
 
 def main():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+    # Generate platform-specific headers with #define prefixes
     for platform in PLATFORMS:
-        with open(f"sokol_{platform.lower()}.h", "w") as f:
+        if not platform["enabled"]:
+            continue
+        name = platform["name"]
+        with open(f"sokol_{name}.h", "w") as f:
             f.write("#pragma once\n")
+            f.write(f"// Auto-generated: sokol function prefixes for {name}\n\n")
 
             for function in SOKOL_FUNCTIONS:
                 sig = parse_c_signature(function)
-                name = sig['name']
-                f.write(f"#define {name} {make_platform_name(name, platform)}\n")
+                func_name = sig['name']
+                f.write(f"#define {func_name} {make_platform_name(func_name, name)}\n")
 
+    # Generate the runtime dispatch shim
     with open(f"sokol_cosmo.c", "w") as f:
         f.write(textwrap.dedent("""
+        // Auto-generated: sokol runtime dispatch for Cosmopolitan
+        // Dispatches sokol calls to the correct platform implementation at runtime.
+        
         #include <sokol_app.h>
         #include <sokol_gfx.h>
         #include <cosmo.h>
@@ -231,15 +248,21 @@ def main():
             name = sig['name']
             args = sig['args']
 
-
+            # Declare extern functions for each platform
             for platform in PLATFORMS:
-                platform_name = make_platform_name(name, platform)
+                if not platform["enabled"]:
+                    continue
+                platform_name = make_platform_name(name, platform["name"])
                 f.write(f"extern {return_type} {platform_name}({arg_list(args)});\n")
 
+            # Generate the dispatch function
             f.write(f"{return_type} {name}({arg_list(args)}) {{\n")
             for platform in PLATFORMS:
-                platform_name = make_platform_name(name, platform)
-                f.write(f"    if (Is{platform}()) {{\n")
+                if not platform["enabled"]:
+                    continue
+                platform_name = make_platform_name(name, platform["name"])
+                check = platform["check"]
+                f.write(f"    if ({check}()) {{\n")
                 if return_type == "void":
                     f.write(f"        {platform_name}({forward_list(args)});\n")
                     f.write( "        return;\n")
@@ -248,9 +271,11 @@ def main():
                 f.write(f"    }}\n")
             f.write("}\n\n")
 
+    print(f"Generated sokol_cosmo.c and platform headers for: {', '.join(p['name'] for p in PLATFORMS if p['enabled'])}")
+
 
 def make_platform_name(name, platform):
-    return f'{platform.lower()}_{name}'
+    return f'{platform}_{name}'
 
 
 def parse_c_signature(signature):
@@ -282,7 +307,7 @@ def parse_c_signature(signature):
                 arg_type, arg_name = parts[0].strip(), None
 
             # Pointer arg
-            if arg_name.startswith('*'):
+            if arg_name and arg_name.startswith('*'):
                 new_arg_name = arg_name.lstrip('*')
                 num_stars = len(arg_name) - len(new_arg_name)
                 arg_name = new_arg_name

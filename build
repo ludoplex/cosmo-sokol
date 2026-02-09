@@ -20,6 +20,10 @@ LINUX_FLAGS="${FLAGS} -Ishims/linux"
 
 WIN32_FLAGS="${FLAGS} -Ishims/win32 -I ${COSMO_HOME}/include/libc/nt"
 
+# macOS flags - uses stub implementation for now
+# Future: -Ishims/macos for Cocoa/Metal shims
+MACOS_FLAGS="${FLAGS}"
+
 mkdir -p .build
 mkdir -p bin
 rm -f .build/commands
@@ -28,11 +32,16 @@ compile() {
 	echo scripts/compile "$@" >> .build/commands
 }
 
+# Platform-specific sokol backends
 compile shims/sokol/sokol_windows.c ${WIN32_FLAGS}
 compile shims/sokol/sokol_linux.c ${LINUX_FLAGS}
+compile shims/sokol/sokol_macos.c ${MACOS_FLAGS}
+
+# Shared sokol code
 compile shims/sokol/sokol_shared.c ${FLAGS}
 compile shims/sokol/sokol_cosmo.c ${FLAGS}
 
+# Dear ImGui
 compile deps/cimgui/cimgui.cpp ${FLAGS}
 compile deps/cimgui/imgui/imgui.cpp ${FLAGS}
 compile deps/cimgui/imgui/imgui_demo.cpp ${FLAGS}
@@ -40,12 +49,15 @@ compile deps/cimgui/imgui/imgui_draw.cpp ${FLAGS}
 compile deps/cimgui/imgui/imgui_tables.cpp ${FLAGS}
 compile deps/cimgui/imgui/imgui_widgets.cpp ${FLAGS}
 
+# Linux system shims (X11, OpenGL)
 compile shims/linux/gl.c ${LINUX_FLAGS}
 compile shims/linux/x11.c ${LINUX_FLAGS}
 
+# Windows specific
 compile nvapi/nvapi.c ${WIN32_FLAGS}
 compile win32_tweaks.c ${WIN32_FLAGS}
 
+# Main application
 compile main.c ${FLAGS} -Invapi
 
 if [ -t 1 ]
