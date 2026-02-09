@@ -4,6 +4,8 @@
 
 Sample sokol+dearimgui application compiled with [cosmopolitan toolchain](https://github.com/jart/cosmopolitan/).
 
+**This fork adds macOS support structure for tri-platform builds (Linux + Windows + macOS).**
+
 ## Build instruction
 
 Download cosmocc at: https://github.com/jart/cosmopolitan/releases.
@@ -14,7 +16,31 @@ Then run `bin/cosmo-sokol`.
 
 Checkout the [github workflow](.github/workflows/build.yml) for all the required dependencies.
 
+## Platform Support
+
+| Platform | Status | Graphics Backend |
+|----------|--------|------------------|
+| Linux | ✅ Full | OpenGL via dlopen(libGL.so) |
+| Windows | ✅ Full | OpenGL via WGL |
+| macOS | 🚧 Stub | Planned: Metal or OpenGL via objc_msgSend |
+
 ## How it works
+
+### Multi-platform runtime dispatch
+
+sokol makes use of platform ifdef to selectively compile platform-dependent code.
+In cosmopolitan, we want to compile all platform-dependent code paths and select the right implementation at runtime instead.
+
+In order to do that with the same library, we can use the following preprocessor trick:
+
+1. For each platform, prefix every sokol public function with its platform name.
+   e.g: `sapp_show_keyboard` becomes `linux_sapp_show_keyboard`, `windows_sapp_show_keyboard`, and `macos_sapp_show_keyboard`.
+
+   This can simply be done by `#define sapp_show_keyboard linux_sapp_show_keyboard` right before including `sokol_app.h`.
+2. Create a multi-platform shim ([`sokol_cosmo.c`](shims/sokol/sokol_cosmo.c)) that selects the right implementation at runtime using `IsLinux()`, `IsWindows()`, and `IsXnu()`.
+
+[gen-sokol](shims/sokol/gen-sokol) takes in a list of sokol public functions and generate the required `#define`-s and the cosmo shim.
+
 ### Linux
 
 Platform header directories are symlinked into the `shims/linux`.
@@ -44,17 +70,37 @@ As of this writing, the required changes are merged and `sokol_app` + `sokol_gfx
 Unfortunately, including the official `windows.h` directly or its MinGW counterpart often results in a lot of duplicated and conflicting definitions when compiling using cosmocc.
 Therefore, all relevant definitions are instead replicated inside [`sokol_windows.c`](shims/sokol/sokol_windows.c).
 
-### Multi-platform runtime
+### macOS (Work in Progress)
 
-sokol makes use of platform ifdef to selectively compile platform-dependent code.
-In cosmopolitan, we want to compile all platform-dependent code paths and select the right implementation at runtime instead.
+The macOS backend is currently a **stub implementation**. It compiles but displays an error message at runtime.
 
-In order to do that with the same library, we can use the following preprocessor trick:
+**The Challenge:**
+Sokol's macOS backend uses Objective-C extensively (NSApplication, NSWindow, NSOpenGLView, Metal, etc.).
+Cosmopolitan's cosmocc cannot directly compile Objective-C.
 
-1. For each platform, prefix every sokol public function with its platform name.
-   e.g: `sapp_show_keyboard` becomes `linux_sapp_show_keyboard` and `windows_sapp_show_keyboard`.
+**The Solution Path:**
+Use the Objective-C runtime from C via `objc_msgSend`:
 
-   This can simply be done by `#define sapp_show_keyboard linux_sapp_show_keyboard` right before including `sokol_app.h`.
-2. Create a multi-platform shim ([`sokol_cosmo.c`](shims/sokol/sokol_cosmo.c)) that selects the right implementation at runtime.
+```c
+#include <objc/objc.h>
+#include <objc/message.h>
 
-[gen-sokol](shims/sokol/gen-sokol) takes in a list of sokol public functions and generate the required `#define`-s and the cosmo shim.
+// Load Objective-C runtime
+void* libobjc = cosmo_dlopen("/usr/lib/libobjc.dylib", RTLD_NOW);
+
+// Call [NSApplication sharedApplication]
+id app = objc_msgSend(objc_getClass("NSApplication"), sel_registerName("sharedApplication"));
+```
+
+See [`shims/macos/README.md`](shims/macos/README.md) and [`shims/sokol/sokol_macos.c`](shims/sokol/sokol_macos.c) for implementation details.
+
+## Fork Notes
+
+This is a fork of [bullno1/cosmo-sokol](https://github.com/bullno1/cosmo-sokol) with added macOS support structure.
+
+Changes from upstream:
+- Updated `gen-sokol` to generate tri-platform shims (Linux, Windows, macOS)
+- Added `sokol_macos.h` and `sokol_macos.c` (stub implementation)
+- Added `shims/macos/` directory with documentation
+- Updated `sokol_cosmo.c` with `IsXnu()` dispatch for macOS
+- Updated build script to compile macOS backend
