@@ -1,12 +1,17 @@
 name: Build
 run-name: Build
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-on:
-  - push
-permissions:
-  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,12 +23,12 @@ jobs:
       - name: Install deps
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libx11-dev libgl-dev libxcursor-dev libxi-dev
+          packages: libx11-dev libgl-dev libglvnd-dev libxrandr-dev libxcursor-dev libxi-dev libxinerama-dev
           version: "@latest"
       - name: Download cosmopolitan
         uses: bjia56/setup-cosmocc@main
         with:
-          version: "3.9.6"
+          version: "3.9.7"
       - name: Build
         run: ./build
       - name: Package binaries
