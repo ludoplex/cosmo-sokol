@@ -28,9 +28,11 @@ jobs:
       - name: Download cosmopolitan
         uses: bjia56/setup-cosmocc@main
         with:
-          version: "3.9.7"
-      - name: Build
+          version: "4.0.2"
+      - name: Build (Dear ImGui)
         run: ./build
+      - name: Build (Nuklear)
+        run: ./build-nk
       - name: Package binaries
         if: startsWith(github.ref, 'refs/tags/')
         run: |
