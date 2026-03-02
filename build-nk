@@ -18,11 +18,15 @@ LINUX_FLAGS="${FLAGS} -Ishims/linux"
 WIN32_FLAGS="${FLAGS} -Ishims/win32 -I ${COSMO_HOME}/include/libc/nt"
 MACOS_FLAGS="${FLAGS} -Ishims/macos"
 
-mkdir -p .build bin
-rm -f .build/commands
+# Use separate build directory to avoid conflicts with Dear ImGui build
+BUILD_DIR=".build-nk"
+export BUILD_DIR
+
+mkdir -p ${BUILD_DIR} bin
+rm -f ${BUILD_DIR}/commands
 
 compile() {
-    echo "scripts/compile $@" >> .build/commands
+    echo "scripts/compile $@" >> ${BUILD_DIR}/commands
 }
 
 # Platform-specific sokol backends
@@ -55,17 +59,17 @@ if command -v parallel > /dev/null 2>&1; then
     else
         PARALLEL_FLAGS="--progress"
     fi
-    cat .build/commands | parallel $PARALLEL_FLAGS --max-procs $(nproc)
+    cat ${BUILD_DIR}/commands | parallel $PARALLEL_FLAGS --max-procs $(nproc)
 else
     echo "Note: GNU parallel not found, compiling sequentially..."
     while IFS= read -r cmd; do
         echo "  $cmd"
         sh -c "$cmd"
-    done < .build/commands
+    done < ${BUILD_DIR}/commands
 fi
 
 # Link with cosmocc (not cosmoc++ - no C++ needed!)
-objects=$(find .build -name '*.o' -not -path '*.aarch64/*')
+objects=$(find ${BUILD_DIR} -name '*.o' -not -path '*.aarch64/*')
 cosmocc ${FLAGS} -o bin/cosmo-sokol-nk $objects
 
 echo "Built: bin/cosmo-sokol-nk"

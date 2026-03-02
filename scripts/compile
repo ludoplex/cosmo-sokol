@@ -2,7 +2,7 @@
 # compile - Compile a single source file with cosmocc/cosmoc++
 # Usage: compile <source.c> [flags...]
 #
-# Outputs object file to .build/<source>.o
+# Outputs object file to $BUILD_DIR/<source>.o (default: .build)
 
 set -e
 
@@ -15,10 +15,13 @@ if [ -z "$SRC" ]; then
     exit 1
 fi
 
+# Allow configurable build directory (default: .build)
+BUILD_DIR="${BUILD_DIR:-.build}"
+
 # Determine output path
 BASENAME=$(basename "$SRC")
 DIRNAME=$(dirname "$SRC")
-OBJ=".build/${DIRNAME}/${BASENAME%.c*}.o"
+OBJ="${BUILD_DIR}/${DIRNAME}/${BASENAME%.c*}.o"
 
 # Create output directory
 mkdir -p "$(dirname "$OBJ")"
