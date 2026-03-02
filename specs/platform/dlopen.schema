@@ -1,0 +1,86 @@
+# dlopen.schema - Unified dynamic library loading for all platforms
+#
+# KEY INSIGHT: jart/cosmopolitan uses cosmo_dlopen() that works on ALL platforms.
+# Linux X11, Windows DLLs, and macOS frameworks use the SAME pattern.
+# macOS is NOT harder - it's the same dlopen approach as Linux.
+#
+# Reference: https://github.com/jart/cosmopolitan/blob/master/libc/dlopen/dlopen.c
+
+# ── Unified Library Handle ─────────────────────────────────────────────────────
+
+type DylibHandle {
+    handle: u64 [doc: "Platform library handle from cosmo_dlopen()"]
+    path: string[256] [doc: "Library path that was loaded"]
+    platform: i32 [doc: "Which platform: 0=Linux, 1=Windows, 2=macOS"]
+    loaded: i32 [doc: "Successfully loaded flag"]
+}
+
+# ── Platform Library Paths ─────────────────────────────────────────────────────
+# All resolved at RUNTIME via IsLinux()/IsWindows()/IsXnu()
+# Same code, different paths
+
+type LibraryPaths {
+    # Graphics - OpenGL
+    gl_linux: string[64] [doc: "libGL.so.1", default: "libGL.so.1"]
+    gl_windows: string[64] [doc: "opengl32.dll", default: "opengl32.dll"]
+    gl_macos: string[128] [doc: "OpenGL.framework", default: "/System/Library/Frameworks/OpenGL.framework/OpenGL"]
+
+    # Windowing - X11 (Linux only)
+    x11: string[64] [doc: "libX11.so.6", default: "libX11.so.6"]
+    xi: string[64] [doc: "libXi.so.6", default: "libXi.so.6"]
+    xcursor: string[64] [doc: "libXcursor.so.1", default: "libXcursor.so.1"]
+
+    # Windowing - macOS (Cocoa via objc runtime)
+    objc: string[64] [doc: "libobjc.dylib", default: "/usr/lib/libobjc.dylib"]
+    cocoa: string[128] [doc: "Cocoa.framework", default: "/System/Library/Frameworks/Cocoa.framework/Cocoa"]
+    appkit: string[128] [doc: "AppKit.framework", default: "/System/Library/Frameworks/AppKit.framework/AppKit"]
+
+    # Windows uses LoadLibrary internally - paths are DLL names
+    # kernel32, user32, gdi32 are already available via cosmopolitan
+}
+
+# ── Function Pointer Table ─────────────────────────────────────────────────────
+# Functions loaded via cosmo_dlsym() - unified for all platforms
+
+type FunctionTable {
+    # OpenGL functions (same on all platforms)
+    glClear: u64 [doc: "void (*glClear)(GLbitfield)"]
+    glClearColor: u64 [doc: "void (*glClearColor)(float,float,float,float)"]
+    glViewport: u64 [doc: "void (*glViewport)(int,int,int,int)"]
+    glCreateShader: u64 [doc: "GLuint (*glCreateShader)(GLenum)"]
+    glShaderSource: u64 [doc: "void (*glShaderSource)(GLuint,GLsizei,const char**,const GLint*)"]
+    glCompileShader: u64 [doc: "void (*glCompileShader)(GLuint)"]
+    glCreateProgram: u64 [doc: "GLuint (*glCreateProgram)(void)"]
+    glAttachShader: u64 [doc: "void (*glAttachShader)(GLuint,GLuint)"]
+    glLinkProgram: u64 [doc: "void (*glLinkProgram)(GLuint)"]
+    glUseProgram: u64 [doc: "void (*glUseProgram)(GLuint)"]
+    # ... more GL functions
+
+    # X11 functions (Linux)
+    XOpenDisplay: u64 [doc: "Display* (*XOpenDisplay)(const char*)"]
+    XCreateWindow: u64 [doc: "Window (*XCreateWindow)(...)"]
+    XMapWindow: u64 [doc: "int (*XMapWindow)(Display*, Window)"]
+    XNextEvent: u64 [doc: "int (*XNextEvent)(Display*, XEvent*)"]
+    XPending: u64 [doc: "int (*XPending)(Display*)"]
+    # ... more X11 functions
+
+    # Objective-C runtime (macOS) - SAME PATTERN as X11
+    objc_msgSend: u64 [doc: "id (*objc_msgSend)(id, SEL, ...)"]
+    objc_getClass: u64 [doc: "Class (*objc_getClass)(const char*)"]
+    sel_registerName: u64 [doc: "SEL (*sel_registerName)(const char*)"]
+    class_addMethod: u64 [doc: "BOOL (*class_addMethod)(Class, SEL, IMP, const char*)"]
+    # ... more objc functions
+
+    # Windows functions are directly available via cosmopolitan NT layer
+    # CreateWindowEx, GetMessage, DispatchMessage, etc.
+}
+
+# ── Loader State ───────────────────────────────────────────────────────────────
+
+type LoaderState {
+    graphics: DylibHandle [doc: "OpenGL library handle"]
+    windowing: DylibHandle [doc: "X11 or Cocoa library handle"]
+    objc_runtime: DylibHandle [doc: "libobjc (macOS only)"]
+    funcs: FunctionTable [doc: "Loaded function pointers"]
+    init_done: i32 [doc: "Initialization complete"]
+}

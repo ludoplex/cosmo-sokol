@@ -1,0 +1,89 @@
+# window.sm - Window lifecycle state machine
+# Describes sokol_app window states and transitions
+#
+# Used by smgen to generate window_sm.c,h
+
+machine Window {
+    initial: Uninitialized
+
+    # ── States ─────────────────────────────────────────────────────────────────
+
+    state Uninitialized {
+        doc: "App not yet started"
+        on INIT -> Initializing
+    }
+
+    state Initializing {
+        doc: "Platform initialization in progress"
+        entry: platform_init()
+        on INIT_COMPLETE -> Running
+        on INIT_FAILED -> Error
+    }
+
+    state Running {
+        doc: "Normal operation - processing frames"
+        entry: call_init_cb()
+
+        on FRAME -> Running [action: process_frame()]
+        on SUSPEND -> Suspended
+        on QUIT_REQUESTED -> Quitting
+        on FOCUS_LOST -> Background
+        on ICONIFY -> Iconified
+        on ERROR -> Error
+    }
+
+    state Background {
+        doc: "Window lost focus but still visible"
+        on FOCUS_GAINED -> Running
+        on SUSPEND -> Suspended
+        on QUIT_REQUESTED -> Quitting
+    }
+
+    state Iconified {
+        doc: "Window minimized"
+        on RESTORE -> Running
+        on QUIT_REQUESTED -> Quitting
+    }
+
+    state Suspended {
+        doc: "App suspended (mobile) or hidden"
+        on RESUME -> Running
+        on QUIT_REQUESTED -> Quitting
+    }
+
+    state Quitting {
+        doc: "Cleanup in progress"
+        entry: call_cleanup_cb()
+        on CLEANUP_COMPLETE -> Terminated
+        on QUIT_CANCELLED -> Running
+    }
+
+    state Terminated {
+        doc: "App has exited"
+        final: true
+    }
+
+    state Error {
+        doc: "Unrecoverable error occurred"
+        entry: log_error()
+        on ACKNOWLEDGE -> Terminated
+    }
+
+    # ── Events ─────────────────────────────────────────────────────────────────
+
+    event INIT           { doc: "sapp_run() called" }
+    event INIT_COMPLETE  { doc: "Platform ready" }
+    event INIT_FAILED    { doc: "Platform init failed" }
+    event FRAME          { doc: "Frame tick" }
+    event SUSPEND        { doc: "App going to background" }
+    event RESUME         { doc: "App returning to foreground" }
+    event FOCUS_LOST     { doc: "Window lost keyboard focus" }
+    event FOCUS_GAINED   { doc: "Window gained keyboard focus" }
+    event ICONIFY        { doc: "Window minimized" }
+    event RESTORE        { doc: "Window restored from minimized" }
+    event QUIT_REQUESTED { doc: "User requested quit" }
+    event QUIT_CANCELLED { doc: "Quit cancelled by app" }
+    event CLEANUP_COMPLETE { doc: "Cleanup finished" }
+    event ERROR          { doc: "Error occurred" }
+    event ACKNOWLEDGE    { doc: "Error acknowledged" }
+}

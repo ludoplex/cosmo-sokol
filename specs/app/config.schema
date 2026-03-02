@@ -1,0 +1,58 @@
+# config.schema - Application configuration
+# Matches sapp_desc structure from sokol_app.h
+#
+# This is what users pass to sapp_run()
+
+type AppConfig {
+    # Window settings
+    width: i32 [doc: "Initial window width", default: 800]
+    height: i32 [doc: "Initial window height", default: 600]
+    window_title: string[128] [doc: "Window title text"]
+
+    # Display options
+    high_dpi: i32 [doc: "Enable HiDPI/Retina support", default: 0]
+    fullscreen: i32 [doc: "Start in fullscreen mode", default: 0]
+    sample_count: i32 [doc: "MSAA sample count", default: 1]
+    swap_interval: i32 [doc: "Vsync interval", default: 1]
+
+    # Behavior flags
+    enable_clipboard: i32 [doc: "Enable clipboard access", default: 0]
+    enable_dragndrop: i32 [doc: "Enable file drag-and-drop", default: 0]
+    max_dropped_files: i32 [doc: "Max dropped files", default: 1]
+    max_dropped_file_path_length: i32 [doc: "Max path length", default: 2048]
+
+    # Icon (optional)
+    icon_default: i32 [doc: "Use sokol default icon", default: 1]
+
+    # Alpha/blending
+    alpha: i32 [doc: "Enable alpha channel in framebuffer", default: 0]
+}
+
+# ── Nuklear Theme ──────────────────────────────────────────────────────────────
+
+type NuklearTheme {
+    # Colors (RGBA packed as u32)
+    text: u32 [doc: "Text color", default: 0xFFFFFFFF]
+    window: u32 [doc: "Window background", default: 0xFF2D2D30]
+    header: u32 [doc: "Header/title background", default: 0xFF3F3F46]
+    border: u32 [doc: "Border color", default: 0xFF3F3F46]
+    button: u32 [doc: "Button background", default: 0xFF3F3F46]
+    button_hover: u32 [doc: "Button hover", default: 0xFF4F4F56]
+    button_active: u32 [doc: "Button pressed", default: 0xFF5F5F66]
+    toggle: u32 [doc: "Checkbox/radio", default: 0xFF3F3F46]
+    toggle_hover: u32 [doc: "Checkbox hover", default: 0xFF4F4F56]
+    select: u32 [doc: "Selection/highlight", default: 0xFF007ACC]
+    slider: u32 [doc: "Slider track", default: 0xFF3F3F46]
+    slider_cursor: u32 [doc: "Slider handle", default: 0xFF007ACC]
+    progress: u32 [doc: "Progress bar fill", default: 0xFF007ACC]
+
+    # Sizing
+    border_width: f32 [doc: "Border thickness", default: 1.0]
+    rounding: f32 [doc: "Corner rounding", default: 4.0]
+    padding_x: f32 [doc: "Horizontal padding", default: 8.0]
+    padding_y: f32 [doc: "Vertical padding", default: 4.0]
+    spacing: f32 [doc: "Widget spacing", default: 4.0]
+
+    # Font
+    font_size: f32 [doc: "Default font size", default: 14.0]
+}

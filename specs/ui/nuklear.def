@@ -1,0 +1,56 @@
+# nuklear.def - Nuklear UI constants for cosmo-sokol
+# X-macro definitions for UI widgets and flags
+#
+# Nuklear is single-header immediate-mode GUI
+# These defs document the integration points
+
+# ── Window Flags ───────────────────────────────────────────────────────────────
+# nk_flags for nk_begin()
+
+NK_FLAG(WINDOW_BORDER,         1 << 0,  "Draw window border")
+NK_FLAG(WINDOW_MOVABLE,        1 << 1,  "Allow window dragging")
+NK_FLAG(WINDOW_SCALABLE,       1 << 2,  "Allow window resize")
+NK_FLAG(WINDOW_CLOSABLE,       1 << 3,  "Show close button")
+NK_FLAG(WINDOW_MINIMIZABLE,    1 << 4,  "Show minimize button")
+NK_FLAG(WINDOW_NO_SCROLLBAR,   1 << 5,  "Disable scrollbar")
+NK_FLAG(WINDOW_TITLE,          1 << 6,  "Show title bar")
+NK_FLAG(WINDOW_SCROLL_AUTO_HIDE, 1 << 7, "Auto-hide scrollbar")
+NK_FLAG(WINDOW_BACKGROUND,     1 << 8,  "Background window")
+NK_FLAG(WINDOW_SCALE_LEFT,     1 << 9,  "Scale from left edge")
+NK_FLAG(WINDOW_NO_INPUT,       1 << 10, "Disable input")
+
+# ── Text Alignment ─────────────────────────────────────────────────────────────
+
+NK_ALIGN(TEXT_LEFT,    0x01, "Left-aligned text")
+NK_ALIGN(TEXT_CENTERED, 0x02, "Centered text")
+NK_ALIGN(TEXT_RIGHT,   0x04, "Right-aligned text")
+
+# ── Widget Types ───────────────────────────────────────────────────────────────
+# Core Nuklear widgets used in cosmo-sokol
+
+WIDGET(LABEL,      0, "nk_label(ctx, text, align)")
+WIDGET(BUTTON,     1, "nk_button_label(ctx, text)")
+WIDGET(CHECKBOX,   2, "nk_checkbox_label(ctx, text, active)")
+WIDGET(SLIDER,     3, "nk_slider_float(ctx, min, val, max, step)")
+WIDGET(PROGRESS,   4, "nk_progress(ctx, cur, max, modifiable)")
+WIDGET(PROPERTY,   5, "nk_property_float(ctx, name, min, val, max, step, inc)")
+WIDGET(EDIT,       6, "nk_edit_string(ctx, flags, buf, len, max, filter)")
+WIDGET(COMBO,      7, "nk_combo(ctx, items, count, selected, height, size)")
+WIDGET(COLOR,      8, "nk_color_picker(ctx, color, format)")
+WIDGET(CHART,      9, "nk_chart_begin(ctx, type, count, min, max)")
+
+# ── Layout Modes ───────────────────────────────────────────────────────────────
+
+LAYOUT(ROW_DYNAMIC,  0, "nk_layout_row_dynamic(ctx, height, cols)")
+LAYOUT(ROW_STATIC,   1, "nk_layout_row_static(ctx, height, width, cols)")
+LAYOUT(ROW_TEMPLATE, 2, "nk_layout_row_template_begin(ctx, height)")
+LAYOUT(SPACE,        3, "nk_layout_space_begin(ctx, format, height, count)")
+
+# ── Event Types ────────────────────────────────────────────────────────────────
+# Mapped from sokol_app events to Nuklear input
+
+INPUT_EVENT(MOUSE_MOVE,    0, "nk_input_motion(ctx, x, y)")
+INPUT_EVENT(MOUSE_BUTTON,  1, "nk_input_button(ctx, btn, x, y, down)")
+INPUT_EVENT(MOUSE_SCROLL,  2, "nk_input_scroll(ctx, delta)")
+INPUT_EVENT(KEY,           3, "nk_input_key(ctx, key, down)")
+INPUT_EVENT(CHAR,          4, "nk_input_unicode(ctx, codepoint)")

@@ -1,0 +1,92 @@
+# reusable.schema - Reusable GUI application structure
+# This defines the interface for projects using cosmo-sokol + Nuklear
+#
+# Projects like tedit-cosmo include this as a dependency and implement
+# the app-specific callbacks.
+
+# ── Application Descriptor ─────────────────────────────────────────────────────
+# User fills this out to configure their app
+
+type CosmoApp {
+    # Window configuration
+    window_width: i32 [doc: "Initial window width", default: 800]
+    window_height: i32 [doc: "Initial window height", default: 600]
+    window_title: string[128] [doc: "Window title"]
+
+    # Callbacks (function pointers set by user)
+    init_cb: u64 [doc: "void (*init)(void) - called once at startup"]
+    frame_cb: u64 [doc: "void (*frame)(struct nk_context* ctx) - called each frame"]
+    cleanup_cb: u64 [doc: "void (*cleanup)(void) - called at shutdown"]
+    event_cb: u64 [doc: "void (*event)(const sapp_event*) - optional raw event handler"]
+
+    # User data
+    user_data: u64 [doc: "void* user context pointer"]
+}
+
+# ── UI Theme ───────────────────────────────────────────────────────────────────
+# Consistent styling across cosmo-sokol apps
+
+type CosmoTheme {
+    # Window colors
+    bg: u32 [doc: "Background color (RGBA)", default: 0x1A2E3CFF]
+    window: u32 [doc: "Window background", default: 0x2D2D30FF]
+    header: u32 [doc: "Header/titlebar", default: 0x3F3F46FF]
+    border: u32 [doc: "Border color", default: 0x3F3F46FF]
+
+    # Widget colors
+    button: u32 [doc: "Button normal", default: 0x3F3F46FF]
+    button_hover: u32 [doc: "Button hover", default: 0x4F4F56FF]
+    button_active: u32 [doc: "Button pressed", default: 0x007ACCFF]
+    text: u32 [doc: "Text color", default: 0xFFFFFFFF]
+    text_dim: u32 [doc: "Dimmed text", default: 0x808080FF]
+
+    # Input colors
+    edit_bg: u32 [doc: "Text edit background", default: 0x1E1E1EFF]
+    edit_border: u32 [doc: "Text edit border", default: 0x3F3F46FF]
+    selection: u32 [doc: "Selection highlight", default: 0x264F78FF]
+    cursor: u32 [doc: "Text cursor", default: 0xFFFFFFFF]
+
+    # Sizing
+    border_width: f32 [doc: "Border thickness", default: 1.0]
+    rounding: f32 [doc: "Corner rounding", default: 0.0]
+    padding: f32 [doc: "Widget padding", default: 4.0]
+    spacing: f32 [doc: "Widget spacing", default: 4.0]
+    font_size: f32 [doc: "Default font size", default: 14.0]
+}
+
+# ── Common UI Patterns ─────────────────────────────────────────────────────────
+# Reusable UI components for consistency
+
+type CosmoMenuBar {
+    menus: CosmoMenu[16] [doc: "Menu items"]
+    menu_count: i32 [doc: "Number of menus"]
+    height: f32 [doc: "Menu bar height", default: 25.0]
+}
+
+type CosmoMenu {
+    label: string[32] [doc: "Menu label (e.g., 'File')"]
+    items: CosmoMenuItem[32] [doc: "Menu items"]
+    item_count: i32 [doc: "Number of items"]
+}
+
+type CosmoMenuItem {
+    label: string[64] [doc: "Item label"]
+    shortcut: string[16] [doc: "Keyboard shortcut (e.g., 'Ctrl+S')"]
+    action_id: i32 [doc: "Action ID for callback"]
+    enabled: i32 [doc: "Item enabled", default: 1]
+    separator: i32 [doc: "Is separator line", default: 0]
+}
+
+# ── Status Bar ─────────────────────────────────────────────────────────────────
+
+type CosmoStatusBar {
+    sections: CosmoStatusSection[8] [doc: "Status sections"]
+    section_count: i32 [doc: "Number of sections"]
+    height: f32 [doc: "Status bar height", default: 22.0]
+}
+
+type CosmoStatusSection {
+    text: string[128] [doc: "Section text"]
+    width: f32 [doc: "Section width (0 = auto)"]
+    align: i32 [doc: "Text alignment: 0=left, 1=center, 2=right"]
+}

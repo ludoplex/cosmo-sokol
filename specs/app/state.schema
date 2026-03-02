@@ -1,0 +1,115 @@
+# state.schema - Application state for cosmo-sokol
+# Defines runtime data structures
+#
+# schemagen generates: state_types.c, state_types.h
+
+# ── Platform Runtime State ─────────────────────────────────────────────────────
+
+type PlatformState {
+    backend: i32 [doc: "Active backend: LINUX=0, WINDOWS=1, MACOS=2"]
+    gfx_backend: i32 [doc: "Graphics: GLCORE=0, D3D11=2, METAL=3"]
+    initialized: i32 [doc: "Platform init complete"]
+
+    # Dynamic library handles (via dlopen)
+    lib_x11: u64 [doc: "libX11.so handle (Linux)"]
+    lib_gl: u64 [doc: "libGL.so / OpenGL.framework handle"]
+    lib_objc: u64 [doc: "libobjc.dylib handle (macOS)"]
+}
+
+# ── Window State ───────────────────────────────────────────────────────────────
+
+type WindowState {
+    width: i32 [doc: "Window width in pixels"]
+    height: i32 [doc: "Window height in pixels"]
+    framebuffer_width: i32 [doc: "Framebuffer width (may differ on HiDPI)"]
+    framebuffer_height: i32 [doc: "Framebuffer height"]
+    dpi_scale: f32 [doc: "DPI scale factor"]
+
+    fullscreen: i32 [doc: "Fullscreen mode active"]
+    focused: i32 [doc: "Window has keyboard focus"]
+    iconified: i32 [doc: "Window is minimized"]
+
+    # Platform-specific window handles (union-like usage)
+    x11_window: u64 [doc: "X11 Window ID (Linux)"]
+    x11_display: u64 [doc: "X11 Display* (Linux)"]
+    hwnd: u64 [doc: "HWND (Windows)"]
+    ns_window: u64 [doc: "NSWindow* (macOS)"]
+    ns_view: u64 [doc: "NSView* (macOS)"]
+}
+
+# ── Input State ────────────────────────────────────────────────────────────────
+
+type InputState {
+    mouse_x: f32 [doc: "Mouse X position"]
+    mouse_y: f32 [doc: "Mouse Y position"]
+    mouse_dx: f32 [doc: "Mouse X delta"]
+    mouse_dy: f32 [doc: "Mouse Y delta"]
+    scroll_x: f32 [doc: "Scroll wheel X"]
+    scroll_y: f32 [doc: "Scroll wheel Y"]
+
+    mouse_buttons: u32 [doc: "Bitmask: left=1, right=2, middle=4"]
+    mouse_locked: i32 [doc: "Mouse locked/captured"]
+    mouse_visible: i32 [doc: "Mouse cursor visible"]
+
+    key_states: u8[512] [doc: "Key down states indexed by keycode"]
+    modifiers: u32 [doc: "Shift=1, Ctrl=2, Alt=4, Super=8"]
+}
+
+# ── Graphics State ─────────────────────────────────────────────────────────────
+
+type GfxState {
+    valid: i32 [doc: "sokol_gfx initialized"]
+    gl_major: i32 [doc: "OpenGL major version"]
+    gl_minor: i32 [doc: "OpenGL minor version"]
+
+    # Framebuffer
+    default_framebuffer: u32 [doc: "Default GL framebuffer"]
+    msaa_samples: i32 [doc: "MSAA sample count"]
+
+    # Current pass state
+    in_pass: i32 [doc: "Inside begin_pass/end_pass"]
+    cur_pipeline: u32 [doc: "Currently bound pipeline"]
+}
+
+# ── Nuklear UI State ───────────────────────────────────────────────────────────
+
+type NuklearState {
+    ctx: u64 [doc: "struct nk_context* pointer"]
+    atlas: u64 [doc: "struct nk_font_atlas* pointer"]
+    font: u64 [doc: "struct nk_font* default font"]
+
+    # Vertex buffer for rendering
+    vbuf: u32 [doc: "Vertex buffer sg_buffer.id"]
+    ibuf: u32 [doc: "Index buffer sg_buffer.id"]
+    img: u32 [doc: "Font atlas sg_image.id"]
+    smp: u32 [doc: "Sampler sg_sampler.id"]
+    pip: u32 [doc: "Pipeline sg_pipeline.id"]
+
+    max_vertices: i32 [doc: "Max vertices in buffer"]
+    max_indices: i32 [doc: "Max indices in buffer"]
+}
+
+# ── Application Callbacks ──────────────────────────────────────────────────────
+
+type AppCallbacks {
+    init_cb: u64 [doc: "void (*init_cb)(void)"]
+    frame_cb: u64 [doc: "void (*frame_cb)(void)"]
+    cleanup_cb: u64 [doc: "void (*cleanup_cb)(void)"]
+    event_cb: u64 [doc: "void (*event_cb)(const sapp_event*)"]
+    user_data: u64 [doc: "void* user context"]
+}
+
+# ── Top-Level App State ────────────────────────────────────────────────────────
+
+type AppState {
+    platform: PlatformState [doc: "Platform detection & libs"]
+    window: WindowState [doc: "Window management"]
+    input: InputState [doc: "Input handling"]
+    gfx: GfxState [doc: "Graphics state"]
+    nk: NuklearState [doc: "Nuklear UI state"]
+    callbacks: AppCallbacks [doc: "User callbacks"]
+
+    frame_count: u64 [doc: "Total frames rendered"]
+    quit_requested: i32 [doc: "App should exit"]
+    quit_ordered: i32 [doc: "Exit confirmed (no cancel)"]
+}

@@ -1,0 +1,72 @@
+#!/bin/sh -e
+# build-nk - Build cosmo-sokol with Nuklear (no C++ required)
+
+if ! command -v cosmocc > /dev/null; then
+    echo "cosmocc not found. Add cosmopolitan/bin to PATH."
+    exit 1
+fi
+
+COSMO_HOME=$(dirname $(dirname $(which cosmocc)))
+
+FLAGS="-I deps/sokol \
+    -I deps/nuklear \
+    -mcosmo \
+    -mtiny \
+    -Wall"
+
+LINUX_FLAGS="${FLAGS} -Ishims/linux"
+WIN32_FLAGS="${FLAGS} -Ishims/win32 -I ${COSMO_HOME}/include/libc/nt"
+MACOS_FLAGS="${FLAGS} -Ishims/macos"
+
+mkdir -p .build bin
+rm -f .build/commands
+
+compile() {
+    echo "scripts/compile $@" >> .build/commands
+}
+
+# Platform-specific sokol backends
+compile shims/sokol/sokol_windows.c ${WIN32_FLAGS}
+compile shims/sokol/sokol_linux.c ${LINUX_FLAGS}
+compile shims/sokol/sokol_macos.c ${MACOS_FLAGS}
+
+# Shared sokol code
+compile shims/sokol/sokol_shared.c ${FLAGS}
+compile shims/sokol/sokol_cosmo.c ${FLAGS}
+
+# Linux system shims (X11, OpenGL)
+compile shims/linux/gl.c ${LINUX_FLAGS}
+compile shims/linux/x11.c ${LINUX_FLAGS}
+
+# Windows specific
+compile nvapi/nvapi.c ${WIN32_FLAGS}
+compile win32_tweaks.c ${WIN32_FLAGS}
+
+# macOS shims (Objective-C runtime via dlopen)
+compile shims/macos/objc_runtime.c ${MACOS_FLAGS}
+
+# Main application (Nuklear - pure C, no C++ needed!)
+compile main_nk.c ${FLAGS} -Invapi
+
+# Compilation (sequential if parallel not available)
+if command -v parallel > /dev/null 2>&1; then
+    if [ -t 1 ]; then
+        PARALLEL_FLAGS="--bar"
+    else
+        PARALLEL_FLAGS="--progress"
+    fi
+    cat .build/commands | parallel $PARALLEL_FLAGS --max-procs $(nproc)
+else
+    echo "Note: GNU parallel not found, compiling sequentially..."
+    while IFS= read -r cmd; do
+        echo "  $cmd"
+        sh -c "$cmd"
+    done < .build/commands
+fi
+
+# Link with cosmocc (not cosmoc++ - no C++ needed!)
+objects=$(find .build -name '*.o' -not -path '*.aarch64/*')
+cosmocc ${FLAGS} -o bin/cosmo-sokol-nk $objects
+
+echo "Built: bin/cosmo-sokol-nk"
+echo "Run with: ./bin/cosmo-sokol-nk"

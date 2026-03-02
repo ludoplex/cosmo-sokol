@@ -1,24 +1,37 @@
-#!/bin/sh -e
+#!/bin/sh
+# compile - Compile a single source file with cosmocc/cosmoc++
+# Usage: compile <source.c> [flags...]
+#
+# Outputs object file to .build/<source>.o
 
-source="$1"
-shift 1
-flags="$@"
+set -e
 
-object=".build/$source.o"
+SRC="$1"
+shift
+FLAGS="$@"
 
-if [ ! -f "$object" ] || [ "$source" -nt "$object" ]
-then
-	mkdir -p $(dirname "$object")
-	case "$source" in
-		*.c)
-			exec cosmocc $flags -c "$source" -o "$object"
-			;;
-		*.cpp)
-			exec cosmoc++ $flags -c "$source" -o "$object"
-			;;
-		*)
-			echo "Cannot compile $source"
-			exit 1
-			;;
-	esac
+if [ -z "$SRC" ]; then
+    echo "Usage: compile <source.c> [flags...]"
+    exit 1
 fi
+
+# Determine output path
+BASENAME=$(basename "$SRC")
+DIRNAME=$(dirname "$SRC")
+OBJ=".build/${DIRNAME}/${BASENAME%.c*}.o"
+
+# Create output directory
+mkdir -p "$(dirname "$OBJ")"
+
+# Choose compiler based on extension
+case "$SRC" in
+    *.cpp|*.cc|*.cxx)
+        CC=cosmoc++
+        ;;
+    *)
+        CC=cosmocc
+        ;;
+esac
+
+# Compile
+$CC -c $FLAGS -o "$OBJ" "$SRC"

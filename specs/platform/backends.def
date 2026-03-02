@@ -1,0 +1,42 @@
+# backends.def - Platform backend definitions for cosmo-sokol
+# X-macro pattern for compile-time platform enumeration
+#
+# Format: DEF(name, value, doc)
+# Generates: enum, string table, dispatch table
+
+# ── Platform Backends ──────────────────────────────────────────────────────────
+# Runtime detection via cosmopolitan: IsLinux(), IsWindows(), IsXnu()
+
+PLATFORM(LINUX,   0, "Linux/BSD via X11 + OpenGL")
+PLATFORM(WINDOWS, 1, "Windows via Win32 + WGL")
+PLATFORM(MACOS,   2, "macOS via Cocoa + OpenGL/Metal")
+
+# ── Graphics Backends ──────────────────────────────────────────────────────────
+# sokol_gfx backend selection
+
+GFX_BACKEND(GLCORE,    0, "OpenGL 3.3+ Core Profile")
+GFX_BACKEND(GLES3,     1, "OpenGL ES 3.0")
+GFX_BACKEND(D3D11,     2, "Direct3D 11")
+GFX_BACKEND(METAL,     3, "Metal")
+GFX_BACKEND(WGPU,      4, "WebGPU")
+
+# ── Platform + GFX Combinations ────────────────────────────────────────────────
+# Valid runtime configurations
+
+COMBO(LINUX_GL,      LINUX,   GLCORE, "Linux + OpenGL Core")
+COMBO(WINDOWS_GL,    WINDOWS, GLCORE, "Windows + OpenGL via WGL")
+COMBO(WINDOWS_D3D,   WINDOWS, D3D11,  "Windows + Direct3D 11")
+COMBO(MACOS_GL,      MACOS,   GLCORE, "macOS + OpenGL (deprecated)")
+COMBO(MACOS_METAL,   MACOS,   METAL,  "macOS + Metal")
+
+# ── Dynamic Libraries ──────────────────────────────────────────────────────────
+# Libraries loaded via dlopen() at runtime
+
+DYLIB(LINUX, X11,     "libX11.so.6",      "X Window System")
+DYLIB(LINUX, XI,      "libXi.so.6",       "X Input Extension")
+DYLIB(LINUX, XCURSOR, "libXcursor.so.1",  "X Cursor")
+DYLIB(LINUX, GL,      "libGL.so.1",       "OpenGL")
+
+DYLIB(MACOS, OBJC,    "/usr/lib/libobjc.dylib",           "Objective-C Runtime")
+DYLIB(MACOS, COCOA,   "/System/Library/Frameworks/Cocoa.framework/Cocoa", "Cocoa")
+DYLIB(MACOS, OPENGL,  "/System/Library/Frameworks/OpenGL.framework/OpenGL", "OpenGL")
