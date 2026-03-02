@@ -79,7 +79,8 @@ static Status (*proc_XIQueryVersion)(Display* dpy, int* major_version_inout, int
 static int (*proc_XISelectEvents)(Display* dpy, Window win, XIEventMask* masks, int num_masks) = NULL;
 
 static void load_X11_procs(void) {
-    libX11 = cosmo_dlopen("libX11.so", RTLD_NOW | RTLD_GLOBAL);
+    libX11 = cosmo_dlopen("libX11.so.6", RTLD_NOW | RTLD_GLOBAL);
+    if (!libX11) libX11 = cosmo_dlopen("libX11.so", RTLD_NOW | RTLD_GLOBAL);
     proc_XOpenDisplay = cosmo_dltramp(cosmo_dlsym(libX11, "XOpenDisplay"));
     assert(proc_XOpenDisplay != NULL && "Could not load XOpenDisplay");
     proc_XCloseDisplay = cosmo_dltramp(cosmo_dlsym(libX11, "XCloseDisplay"));
@@ -189,7 +190,8 @@ static void load_X11_procs(void) {
 }
 
 static void load_Xcursor_procs(void) {
-    libXcursor = cosmo_dlopen("libXcursor.so", RTLD_NOW | RTLD_GLOBAL);
+    libXcursor = cosmo_dlopen("libXcursor.so.1", RTLD_NOW | RTLD_GLOBAL);
+    if (!libXcursor) libXcursor = cosmo_dlopen("libXcursor.so", RTLD_NOW | RTLD_GLOBAL);
     proc_XcursorGetDefaultSize = cosmo_dltramp(cosmo_dlsym(libXcursor, "XcursorGetDefaultSize"));
     assert(proc_XcursorGetDefaultSize != NULL && "Could not load XcursorGetDefaultSize");
     proc_XcursorGetTheme = cosmo_dltramp(cosmo_dlsym(libXcursor, "XcursorGetTheme"));
@@ -205,7 +207,8 @@ static void load_Xcursor_procs(void) {
 }
 
 static void load_Xi_procs(void) {
-    libXi = cosmo_dlopen("libXi.so", RTLD_NOW | RTLD_GLOBAL);
+    libXi = cosmo_dlopen("libXi.so.6", RTLD_NOW | RTLD_GLOBAL);
+    if (!libXi) libXi = cosmo_dlopen("libXi.so", RTLD_NOW | RTLD_GLOBAL);
     proc_XIQueryVersion = cosmo_dltramp(cosmo_dlsym(libXi, "XIQueryVersion"));
     assert(proc_XIQueryVersion != NULL && "Could not load XIQueryVersion");
     proc_XISelectEvents = cosmo_dltramp(cosmo_dlsym(libXi, "XISelectEvents"));

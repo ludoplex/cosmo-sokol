@@ -777,7 +777,9 @@ static void (*proc_glWindowPos3s)(GLshort x, GLshort y, GLshort z) = NULL;
 static void (*proc_glWindowPos3sv)(const GLshort * v) = NULL;
 
 static void load_gl_shims(void) {
-    libgl = cosmo_dlopen("libgl.so", RTLD_NOW | RTLD_GLOBAL);
+    // Try versioned library first (runtime), then unversioned (dev symlink)
+    libgl = cosmo_dlopen("libGL.so.1", RTLD_NOW | RTLD_GLOBAL);
+    if (!libgl) libgl = cosmo_dlopen("libGL.so", RTLD_NOW | RTLD_GLOBAL);
     proc_glAccum = cosmo_dltramp(cosmo_dlsym(libgl, "glAccum"));
     proc_glActiveTexture = cosmo_dltramp(cosmo_dlsym(libgl, "glActiveTexture"));
     proc_glAlphaFunc = cosmo_dltramp(cosmo_dlsym(libgl, "glAlphaFunc"));

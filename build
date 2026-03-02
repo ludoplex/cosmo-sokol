@@ -60,14 +60,20 @@ compile win32_tweaks.c ${WIN32_FLAGS}
 # Main application
 compile main.c ${FLAGS} -Invapi
 
-if [ -t 1 ]
-then
-	PARALLEL_FLAGS="--bar"
+if command -v parallel > /dev/null 2>&1; then
+	if [ -t 1 ]; then
+		PARALLEL_FLAGS="--bar"
+	else
+		PARALLEL_FLAGS="--progress"
+	fi
+	cat .build/commands | parallel $PARALLEL_FLAGS --max-procs $(nproc)
 else
-	PARALLEL_FLAGS="--progress"
+	echo "Note: GNU parallel not found, compiling sequentially..."
+	while IFS= read -r cmd; do
+		echo "  $cmd"
+		sh -c "$cmd"
+	done < .build/commands
 fi
-
-cat .build/commands | parallel $PARALLEL_FLAGS --max-procs $(nproc)
 
 objects=$(find .build -name '*.o' -not -path '*.aarch64/*')
 cosmoc++ ${FLAGS} -o bin/cosmo-sokol $objects
